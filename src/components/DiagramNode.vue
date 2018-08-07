@@ -14,7 +14,7 @@
       @mousedown="mouseDown"
       @mouseenter="mouseenter"
       @mouseleave="mouseleave"
-      @click="handleClick">
+    >
       <rect
         fill="#000000"
         :fill-opacity="titleFillOpacity"
@@ -24,7 +24,7 @@
         class="node-dark-background"
         >
       </rect>
-      <text :x="10" :y="30" font-size="14" font-weight="bold" fill="#000000">{{title}}</text>
+      <text :x="10" :y="30" font-size="14" font-weight="bold" fill="#000000" @click="handleClick">{{title}}</text>
       <g v-if="deletable" @click="deleteNode">
         <rect
           :x="width - 12"
@@ -104,7 +104,7 @@ export default {
 
   methods: {
     deleteNode: function() {
-      this.$emit("delete");
+      this.$emit("delete", this.index);
     },
 
     mouseDown: function(event) {

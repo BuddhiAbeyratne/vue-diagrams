@@ -69,7 +69,7 @@
           :index="nodeIndex"
           v-for="(node, nodeIndex) in model._model.nodes"
           @onStartDrag="startDragItem"
-          @delete="model.deleteNode(node)"
+          @delete="handleDelete"
           @click="handleClick"
         >
           <DiagramPort
@@ -335,6 +335,10 @@ export default {
 
     handleClick(nodeId) {
       this.$emit("click", nodeId);
+    },
+
+    handleDelete(nodeId) {
+      this.$emit("delete", nodeId);
     },
 
     startDragPoint(pointInfo) {
