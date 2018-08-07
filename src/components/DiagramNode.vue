@@ -13,7 +13,8 @@
       x="0" y="0"
       @mousedown="mouseDown"
       @mouseenter="mouseenter"
-      @mouseleave="mouseleave">
+      @mouseleave="mouseleave"
+      @click="handleClick">
       <rect
         fill="#000000"
         :fill-opacity="titleFillOpacity"
@@ -121,6 +122,10 @@ export default {
 
     mouseleave() {
       this.titleFillOpacity = 0.25;
+    },
+
+    handleClick() {
+      this.$emit("click", this.index);
     }
   }
 };

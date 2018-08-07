@@ -70,6 +70,7 @@
           v-for="(node, nodeIndex) in model._model.nodes"
           @onStartDrag="startDragItem"
           @delete="model.deleteNode(node)"
+          @click="handleClick"
         >
           <DiagramPort
             v-for="(port, portIndex) in node.ports"
@@ -282,7 +283,6 @@ export default {
       var links = this.model._model.links;
 
       if (this.draggedItem && this.draggedItem.type === "points") {
-        console.log(this.draggedItem);
         var pointIndex = this.draggedItem.pointIndex;
         var linkIndex = this.draggedItem.linkIndex;
 
@@ -331,6 +331,10 @@ export default {
 
         this.updateLinksPositions();
       }
+    },
+
+    handleClick(nodeId) {
+      this.$emit("click", nodeId);
     },
 
     startDragPoint(pointInfo) {

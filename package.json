@@ -14,7 +14,7 @@
   "author": "Gwenael Pluchon",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gwenaelp/vue-diagrams.git"
+    "url": "git+https://github.com/gwenaelp/vue-diagrams.git"
   },
   "bugs": {
     "url": "https://github.com/gwenaelp/vue-diagrams/issues"
