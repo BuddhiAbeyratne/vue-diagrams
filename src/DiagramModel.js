@@ -26,7 +26,7 @@ class DiagramModel {
    * @param {Integer} height Height
    * @return {Node} The node created
    */
-  addNode({ id = generateId(), title, x, y, width, height } = {}) {
+  addNode({ id, title, x, y, width, height } = {}) {
     const newNode = new DiagramNode(id, title, x, y, width, height);
     this._model.nodes.push(newNode);
     return newNode;
@@ -34,6 +34,11 @@ class DiagramModel {
 
   clear() {
     this._model.nodes.splice(0, this._model.nodes.length);
+    const numNodes = this._model.nodes.length;
+
+    for (let i = 0; i < numNodes; i++) {
+      this.deleteNode(this._model.nodes[0]);
+    }
   }
 
   deleteNode(node) {

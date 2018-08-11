@@ -68,6 +68,7 @@ export default {
       required: true
     },
     index: Number,
+    id: Number,
     ports: {
       type: Array,
       default: () => {
@@ -104,7 +105,7 @@ export default {
 
   methods: {
     deleteNode: function() {
-      this.$emit("delete", this.index);
+      this.$emit("delete", this.id);
     },
 
     mouseDown: function(event) {
@@ -125,7 +126,7 @@ export default {
     },
 
     handleClick() {
-      this.$emit("click", this.index);
+      this.$emit("click", this.id);
     }
   }
 };

@@ -66,6 +66,7 @@
           :deletable="node.deletable"
           :ports="node.ports"
           :selected="selectedItem.type === 'nodes' && selectedItem.index === nodeIndex"
+          :id="node.id"
           :index="nodeIndex"
           v-for="(node, nodeIndex) in model._model.nodes"
           @onStartDrag="startDragItem"
