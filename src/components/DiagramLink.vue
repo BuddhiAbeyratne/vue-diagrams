@@ -107,8 +107,7 @@ export default {
     },
     mouseDown(pos) {},
     mouseDownSegment(pos, segmentIndex) {
-      this.createPoint(pos.x, pos.y, segmentIndex);
-      this.mouseDownPoint(pos, segmentIndex);
+      this.$emit("onDeleteLink", this.id);
     },
     createPoint(x, y, pointIndex) {
       this.$emit("onCreatePoint", x, y, this.index, pointIndex);

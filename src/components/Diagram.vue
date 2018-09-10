@@ -45,7 +45,7 @@
           :index="index"
           v-for="(link, index) in model._model.links"
           @onStartDrag="startDragPoint"
-          @onCreatePoint="createPoint"
+          @onDeleteLink="deleteLink"
         />
         <line
           :x1="getPortHandlePosition(newLink.startPortId).x"
@@ -188,6 +188,17 @@ export default {
       links[linkIndex].points = points;
     },
 
+    deleteLink(linkId) {
+      const link = this.model.getLink(linkId);
+      const srcPort = this.$refs["port-" + link.from][0];
+      const destPort = this.$refs["port-" + link.to][0];
+      const srcIndex = srcPort.nodeIndex;
+      const destIndex = destPort.nodeIndex;
+
+      this.model.deleteLink(link);
+      this.$emit("linkDeleted", { sourceIndex: srcIndex, destIndex }); // @todo need to standardize event naming
+    },
+
     clearSelection() {
       this.selectedItem = {};
     },
@@ -306,6 +317,9 @@ export default {
         var port1 = this.$refs["port-" + port1Id][0];
         var port2 = this.$refs["port-" + port2Id][0];
 
+        console.log("Creating link");
+        this.$emit("linkCreated", port1.nodeIndex, port2.nodeIndex);
+
         if (port1.type === "in" && port2.type === "out") {
           links.push({
             id: generateId(),
@@ -343,7 +357,6 @@ export default {
     },
 
     startDragPoint(pointInfo) {
-      console.log("startDragPoint", pointInfo);
       this.draggedItem = pointInfo;
     },
 

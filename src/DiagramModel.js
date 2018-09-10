@@ -39,6 +39,11 @@ class DiagramModel {
     for (let i = 0; i < numNodes; i++) {
       this.deleteNode(this._model.nodes[0]);
     }
+
+    const numLinks = this._model.links.length;
+    for (let i = 0; i < numLinks; i++) {
+      this.deleteLink(this._model.links[0]);
+    }
   }
 
   deleteNode(node) {
@@ -59,6 +64,10 @@ class DiagramModel {
       }
     }
     this._model.nodes.splice(index, 1);
+  }
+
+  getLink(linkId) {
+    return this._model.links.find(link => link.id === linkId);
   }
 
   deleteLink(link) {
