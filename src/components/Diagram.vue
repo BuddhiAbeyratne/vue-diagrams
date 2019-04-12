@@ -1,5 +1,6 @@
 <template>
   <div>
+    Version 1.4
    <SvgPanZoom
       :style="{ width: width + 'px', height: height + 'px', border:'1px solid black'}"
       xmlns="http://www.w3.org/2000/svg"
@@ -55,37 +56,19 @@
           style="stroke:rgb(255,0,0);stroke-width:2"
           v-if="newLink"
         />
-        <DiagramNode
-          :ref="'node-' + nodeIndex"
-          :title="node.title"
-          :x="node.x"
-          :y="node.y"
-          :width="node.width"
-          :height="node.height"
-          :color="node.color"
-          :deletable="node.deletable"
-          :ports="node.ports"
-          :selected="selectedItem.type === 'nodes' && selectedItem.index === nodeIndex"
-          :id="node.id"
-          :index="nodeIndex"
+        <DiagramNodeWrapper
           v-for="(node, nodeIndex) in model._model.nodes"
-          @onStartDrag="startDragItem"
-          @delete="handleDelete"
+          :key="nodeIndex"
+          :node="node"
+          :nodeIndex="nodeIndex"
+          :isSelected="selectedItem.type === 'nodes' && selectedItem.index === nodeIndex"
+          @selectNode="onSelectNode"
+          @startDragNode="onStartDragNode"
+          @mouseUpPort="onMouseUpPort"
           @click="handleClick"
-        >
-          <DiagramPort
-            v-for="(port, portIndex) in node.ports"
-            :ref="'port-' + port.id"
-            :id="port.id"
-            :nodeIndex="nodeIndex"
-            :y="portIndex * 20"
-            :nodeWidth="node.width"
-            :type="port.type"
-            :name="port.name"
-            @onStartDragNewLink="startDragNewLink"
-            @mouseUpPort="mouseUpPort"
-          />
-        </DiagramNode>
+          @delete="handleDelete"
+          @startDragNewLink="startDragNewLink"
+        ></DiagramNodeWrapper>
       </g>
     </svg>
   </SvgPanZoom>
@@ -93,11 +76,11 @@
 </template>
 <script>
 import SvgPanZoom from "vue-svg-pan-zoom";
-
-import DiagramModel from "./../DiagramModel";
+import DiagramNodeWrapper from "./DiagramNodeWrapper";
 import DiagramNode from "./DiagramNode";
-import DiagramLink from "./DiagramLink";
 import DiagramPort from "./DiagramPort";
+import DiagramModel from "./../DiagramModel";
+import DiagramLink from "./DiagramLink";
 import LinkFactory from "../util/LinkFactory";
 
 function getAbsoluteXY(element) {
@@ -150,10 +133,11 @@ export default {
     };
   },
   components: {
-    DiagramNode,
+    DiagramNodeWrapper,
     DiagramLink,
-    DiagramPort,
-    SvgPanZoom
+    SvgPanZoom,
+    DiagramNode,
+    DiagramPort
   },
 
   methods: {
@@ -167,6 +151,7 @@ export default {
       let ctm = rec.getCTM().inverse();
       return point.matrixTransform(ctm);
     },
+
     beforePan() {
       if (this.selectedItem.type || this.draggedItem || this.newLink)
         return false;
@@ -214,17 +199,10 @@ export default {
       });
     },
 
-    startDragNewLink(startPortId) {
-      this.panEnabled = false;
-      this.newLink = {
-        startPortId
-      };
-    },
-
     getPortHandlePosition(portId) {
-      if (this.$refs["port-" + portId]) {
-        var port = this.$refs["port-" + portId][0];
-        var node = this.$refs["node-" + port.nodeIndex][0];
+      if (this.getPortById(portId)) {
+        var port = this.getPortById(portId);
+        var node = this.getNodeByPortId(portId);
         var x;
         var y;
         if (port.type === "in") {
@@ -284,14 +262,18 @@ export default {
       this.newLink = undefined;
     },
 
-    mouseUpPort(portId) {
+    startDragPoint(pointInfo) {
+      this.draggedItem = pointInfo;
+    },
+
+    onMouseUpPort(portId) {
       let links = this.model._model.links;
 
       if (this.draggedItem && this.draggedItem.type === "points") {
         let pointIndex = this.draggedItem.pointIndex;
         let linkIndex = this.draggedItem.linkIndex;
 
-        if (this.$refs["port-" + portId][0].type === "in") {
+        if (this.getPortById(portId).type === "in") {
           let l = links[linkIndex].points.length;
           links[linkIndex].points.splice(
             pointIndex,
@@ -306,6 +288,76 @@ export default {
       if (this.newLink !== undefined) {
         this.createLink(portId);
       }
+    },
+
+    getPortById(portId) {
+      const node = this.model._model.nodes.find(
+        node => node.ports.find(port => port.id === portId) !== undefined
+      );
+      return node != undefined
+        ? node.ports.find(port => port.id === portId)
+        : undefined;
+    },
+
+    getNodeIndexById(portId) {
+      return this.model._model.nodes.findIndex(
+        node => node.ports.find(port => port.id === portId) !== undefined
+      );
+    },
+
+    getNodeByPortId(portId) {
+      return this.model._model.nodes.find(
+        node => node.ports.find(port => port.id === portId) !== undefined
+      );
+    },
+
+    createLink(portId) {
+      let links = this.model._model.links;
+
+      let port1Id = this.newLink.startPortId;
+      let port2Id = portId;
+      let port1 = this.getPortById(port1Id);
+      let port2 = this.getPortById(port2Id);
+
+      let createdLink = null;
+      if (port1.type === "in" && port2.type === "out") {
+        createdLink = LinkFactory.createLink(port2.id, port1.id);
+      } else if (port2.type === "in" && port1.type === "out") {
+        createdLink = LinkFactory.createLink(port1.id, port2.id);
+      } else {
+        console.warn("You must link one out port and one in port");
+      }
+
+      if (createdLink !== null) {
+        links.push(createdLink);
+        this.model._model.links = links;
+        this.updateLinksPositions();
+        this.$emit(
+          "linkCreated",
+          createdLink.id,
+          this.getNodeByPortId(port1Id).id,
+          this.getNodeByPortId(port2Id).id,
+          port1Id
+        );
+      }
+    },
+
+    onSelectNode(node) {
+      this.selectedItem = node;
+    },
+
+    onStartDragNode({ item, x, y }) {
+      this.panEnabled = false;
+      this.initialDragX = x;
+      this.initialDragY = y;
+      this.draggedItem = item;
+    },
+
+    startDragNewLink(startPortId) {
+      this.panEnabled = false;
+      this.newLink = {
+        startPortId
+      };
     },
 
     handleClick(nodeId) {
@@ -326,37 +378,6 @@ export default {
       this.selectedItem = item;
       this.initialDragX = x;
       this.initialDragY = y;
-    },
-
-    createLink(portId) {
-      let links = this.model._model.links;
-
-      let port1Id = this.newLink.startPortId;
-      let port2Id = portId;
-      let port1 = this.$refs["port-" + port1Id][0];
-      let port2 = this.$refs["port-" + port2Id][0];
-
-      let createdLink = null;
-      if (port1.type === "in" && port2.type === "out") {
-        createdLink = LinkFactory.createLink(port2.id, port1.id);
-      } else if (port2.type === "in" && port1.type === "out") {
-        createdLink = LinkFactory.createLink(port1.id, port2.id);
-      } else {
-        console.warn("You must link one out port and one in port");
-      }
-
-      if (createdLink !== null) {
-        links.push(createdLink);
-        this.model._model.links = links;
-        this.updateLinksPositions();
-        this.$emit(
-          "linkCreated",
-          createdLink.id,
-          port1.nodeIndex,
-          port2.nodeIndex,
-          port1Id
-        );
-      }
     }
   },
   computed: {

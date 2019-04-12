@@ -98,7 +98,6 @@ export default {
       this.largeStrokeStyle = "stroke:rgba(255,0,0,0.0);";
     },
     mouseDownPoint(pos, pointIndex) {
-      console.log("mouseDownPoint", arguments);
       this.$emit("onStartDrag", {
         type: "points",
         linkIndex: this.index,

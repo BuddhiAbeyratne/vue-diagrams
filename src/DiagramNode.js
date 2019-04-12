@@ -35,7 +35,9 @@ class DiagramNode {
     let newPort = {
       id: generateId(),
       type: "in",
-      name
+      name,
+      x: 0,
+      y: 0
     };
 
     this.ports.push(newPort);
@@ -52,7 +54,9 @@ class DiagramNode {
     let newPort = {
       id: generateId(),
       type: "out",
-      name
+      name,
+      x: 0,
+      y: 0
     };
 
     this.ports.push(newPort);
