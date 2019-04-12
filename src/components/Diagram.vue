@@ -98,10 +98,7 @@ import DiagramModel from "./../DiagramModel";
 import DiagramNode from "./DiagramNode";
 import DiagramLink from "./DiagramLink";
 import DiagramPort from "./DiagramPort";
-
-var generateId = function() {
-  return Math.trunc(Math.random() * 1000);
-};
+import LinkFactory from "../util/LinkFactory";
 
 function getAbsoluteXY(element) {
   var viewportElement = document.documentElement;
@@ -190,13 +187,9 @@ export default {
 
     deleteLink(linkId) {
       const link = this.model.getLink(linkId);
-      const srcPort = this.$refs["port-" + link.from][0];
-      const destPort = this.$refs["port-" + link.to][0];
-      const srcIndex = srcPort.nodeIndex;
-      const destIndex = destPort.nodeIndex;
 
       this.model.deleteLink(link);
-      this.$emit("linkDeleted", { sourceIndex: srcIndex, destIndex }); // @todo need to standardize event naming
+      this.$emit("linkDeleted", linkId); // @todo need to standardize event naming
     },
 
     clearSelection() {
@@ -292,14 +285,14 @@ export default {
     },
 
     mouseUpPort(portId) {
-      var links = this.model._model.links;
+      let links = this.model._model.links;
 
       if (this.draggedItem && this.draggedItem.type === "points") {
-        var pointIndex = this.draggedItem.pointIndex;
-        var linkIndex = this.draggedItem.linkIndex;
+        let pointIndex = this.draggedItem.pointIndex;
+        let linkIndex = this.draggedItem.linkIndex;
 
         if (this.$refs["port-" + portId][0].type === "in") {
-          var l = links[linkIndex].points.length;
+          let l = links[linkIndex].points.length;
           links[linkIndex].points.splice(
             pointIndex,
             l - this.draggedItem.pointIndex
@@ -311,40 +304,7 @@ export default {
       }
 
       if (this.newLink !== undefined) {
-        var port1Id = this.newLink.startPortId;
-        var port2Id = portId;
-
-        var port1 = this.$refs["port-" + port1Id][0];
-        var port2 = this.$refs["port-" + port2Id][0];
-
-        console.log("Creating link");
-        this.$emit("linkCreated", port1.nodeIndex, port2.nodeIndex);
-
-        if (port1.type === "in" && port2.type === "out") {
-          links.push({
-            id: generateId(),
-            from: port2.id,
-            to: port1.id,
-            positionFrom: {},
-            positionTo: {},
-            points: []
-          });
-        } else if (port2.type === "in" && port1.type === "out") {
-          links.push({
-            id: generateId(),
-            from: port1.id,
-            to: port2.id,
-            positionFrom: {},
-            positionTo: {},
-            points: []
-          });
-        } else {
-          console.warn("You must link one out port and one in port");
-        }
-
-        this.model._model.links = links;
-
-        this.updateLinksPositions();
+        this.createLink(portId);
       }
     },
 
@@ -366,6 +326,37 @@ export default {
       this.selectedItem = item;
       this.initialDragX = x;
       this.initialDragY = y;
+    },
+
+    createLink(portId) {
+      let links = this.model._model.links;
+
+      let port1Id = this.newLink.startPortId;
+      let port2Id = portId;
+      let port1 = this.$refs["port-" + port1Id][0];
+      let port2 = this.$refs["port-" + port2Id][0];
+
+      let createdLink = null;
+      if (port1.type === "in" && port2.type === "out") {
+        createdLink = LinkFactory.createLink(port2.id, port1.id);
+      } else if (port2.type === "in" && port1.type === "out") {
+        createdLink = LinkFactory.createLink(port1.id, port2.id);
+      } else {
+        console.warn("You must link one out port and one in port");
+      }
+
+      if (createdLink !== null) {
+        links.push(createdLink);
+        this.model._model.links = links;
+        this.updateLinksPositions();
+        this.$emit(
+          "linkCreated",
+          createdLink.id,
+          port1.nodeIndex,
+          port2.nodeIndex,
+          port1Id
+        );
+      }
     }
   },
   computed: {

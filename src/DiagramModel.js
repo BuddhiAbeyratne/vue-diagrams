@@ -1,8 +1,5 @@
 import DiagramNode from "./DiagramNode";
-
-var generateId = function() {
-  return Math.trunc(Math.random() * 1000);
-};
+import LinkFactory from "./util/LinkFactory";
 
 /**
  * @class DiagramModel
@@ -82,14 +79,9 @@ class DiagramModel {
    * @param {Array}  points  Optional. Array of points to make the link represented as a segmented line
    */
   addLink(from, to, points = []) {
-    this._model.links.push({
-      id: generateId(),
-      from: from,
-      to: to,
-      positionFrom: {},
-      positionTo: {},
-      points
-    });
+    const newLink = LinkFactory.createLink(from, to, points);
+    this._model.links.push(newLink);
+    return newLink.id;
   }
 
   /**

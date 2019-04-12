@@ -58,6 +58,7 @@
     <slot></slot>
   </svg>
 </template>
+
 <script>
 export default {
   name: "DiagramNode",
