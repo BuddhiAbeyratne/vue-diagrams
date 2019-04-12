@@ -64,12 +64,6 @@ export default {
     };
   },
 
-  created() {
-    this.node.ports.forEach((port, portIndex) => {
-      port.y = portIndex * 20;
-    });
-  },
-
   methods: {
     handleClick(nodeId) {
       this.$emit("click", nodeId);

@@ -1,84 +1,56 @@
 <template>
   <div>
     Version 1.4
-   <SvgPanZoom
-      :style="{ width: width + 'px', height: height + 'px', border:'1px solid black'}"
-      xmlns="http://www.w3.org/2000/svg"
-      :zoomEnabled="zoomEnabled"
-      id="svgroot"
+    <DiagramGrid
+      :beforePan="beforePan"
       :panEnabled="panEnabled"
-      :controlIconsEnabled="true"
-      :fit="false"
-      :center="true"
-      viewportSelector="#svgroot2"
-      :preventMouseEventsDefault="false"
-      :beforePan="beforePan">
-    <svg
-      id="svgroot2"
-      version="1.1"
-      xmlns="http://www.w3.org/2000/svg"
-      :viewBox="'0 0 ' + width + ' ' + height"
       :width="width"
       :height="height"
-      preserveAspectRatio="xMinYMin meet"
-      class="svg-content"
-      ref="dragramRoot"
       @mousemove="mouseMove"
-      @mouseup="mouseUp">
-      <defs>
-        <pattern id="smallGrid" width="16" height="16" patternUnits="userSpaceOnUse">
-          <path d="M 16 0 L 0 0 0 16" fill="none" stroke="gray" stroke-width="0.5"/>
-        </pattern>
-        <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
-          <rect width="80" height="80" fill="url(#smallGrid)"/>
-          <path d="M 80 0 L 0 0 0 80" fill="none" stroke="gray" stroke-width="1"/>
-        </pattern>
-      </defs>
-
-      <rect x="-5000px" y="-5000px" width="10000px" height="10000px" fill="url(#grid)" @mousedown="clearSelection" ref="grid" class="svg-pan-zoom_viewport"/>
-      <g ref="viewPort" id="viewport" x="50" y="50">
-        <DiagramLink
-          :ref="'link-' + index"
-          :positionFrom="link.positionFrom"
-          :positionTo="link.positionTo"
-          :points="link.points"
-          :id="link.id"
-          :index="index"
-          v-for="(link, index) in model._model.links"
-          @onStartDrag="startDragPoint"
-          @onDeleteLink="deleteLink"
-        />
-        <line
-          :x1="getPortHandlePosition(newLink.startPortId).x"
-          :y1="getPortHandlePosition(newLink.startPortId).y"
-          :x2="convertXYtoViewPort(mouseX, 0).x"
-          :y2="convertXYtoViewPort(0, mouseY).y"
-          style="stroke:rgb(255,0,0);stroke-width:2"
-          v-if="newLink"
-        />
-        <DiagramNodeWrapper
-          v-for="(node, nodeIndex) in model._model.nodes"
-          :key="nodeIndex"
-          :node="node"
-          :nodeIndex="nodeIndex"
-          :isSelected="selectedItem.type === 'nodes' && selectedItem.index === nodeIndex"
-          @selectNode="onSelectNode"
-          @startDragNode="onStartDragNode"
-          @mouseUpPort="onMouseUpPort"
-          @click="handleClick"
-          @delete="handleDelete"
-          @startDragNewLink="startDragNewLink"
-        ></DiagramNodeWrapper>
-      </g>
-    </svg>
-  </SvgPanZoom>
+      @mouseup="mouseUp"
+      @mousedown="clearSelection"
+    >
+      <DiagramLink
+        v-for="(link, index) in model._model.links"
+        :ref="'link-' + index"
+        :positionFrom="link.positionFrom"
+        :positionTo="link.positionTo"
+        :points="link.points"
+        :id="link.id"
+        :index="index"
+        :key="link.id"
+        @onStartDrag="startDragPoint"
+        @onDeleteLink="deleteLink"
+      />
+      <line
+        v-if="newLink"
+        class="new-link-line"
+        :x1="getPortHandlePosition(newLink.startPortId).x"
+        :y1="getPortHandlePosition(newLink.startPortId).y"
+        :x2="convertXYtoViewPort(mouseX, 0).x"
+        :y2="convertXYtoViewPort(0, mouseY).y"
+      />
+      <DiagramNodeWrapper
+        v-for="(node, nodeIndex) in model._model.nodes"
+        :key="nodeIndex"
+        :node="node"
+        :nodeIndex="nodeIndex"
+        :isSelected="selectedItem.type === 'nodes' && selectedItem.index === nodeIndex"
+        @selectNode="onSelectNode"
+        @startDragNode="onStartDragNode"
+        @mouseUpPort="onMouseUpPort"
+        @click="handleClick"
+        @delete="handleDelete"
+        @startDragNewLink="startDragNewLink"
+      ></DiagramNodeWrapper>
+    </DiagramGrid>
   </div>
 </template>
 <script>
 import SvgPanZoom from "vue-svg-pan-zoom";
 import DiagramNodeWrapper from "./DiagramNodeWrapper";
 import DiagramNode from "./DiagramNode";
-import DiagramPort from "./DiagramPort";
+import DiagramGrid from "./DiagramGrid";
 import DiagramModel from "./../DiagramModel";
 import DiagramLink from "./DiagramLink";
 import LinkFactory from "../util/LinkFactory";
@@ -135,9 +107,8 @@ export default {
   components: {
     DiagramNodeWrapper,
     DiagramLink,
-    SvgPanZoom,
     DiagramNode,
-    DiagramPort
+    DiagramGrid
   },
 
   methods: {
@@ -393,11 +364,15 @@ export default {
   }
 };
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  svg{
-    user-select: none;
-    font-family: Helvetica;
-  }
+
+svg {
+  user-select: none;
+  font-family: Helvetica;
+}
+
+.new-link-line {
+  stroke: rgb(255,0,0);
+  stroke-width: 2
+}
 </style>

@@ -42,6 +42,8 @@ class DiagramNode {
 
     this.ports.push(newPort);
 
+    newPort.y = (this.ports.length - 1) * 20;
+
     return newPort.id;
   }
 
@@ -60,6 +62,8 @@ class DiagramNode {
     };
 
     this.ports.push(newPort);
+
+    newPort.y = (this.ports.length - 1) * 20;
 
     return newPort.id;
   }
