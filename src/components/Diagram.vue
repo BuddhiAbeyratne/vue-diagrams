@@ -49,7 +49,6 @@
 <script>
 import SvgPanZoom from "vue-svg-pan-zoom";
 import DiagramNodeWrapper from "./DiagramNodeWrapper";
-import DiagramNode from "./DiagramNode";
 import DiagramGrid from "./DiagramGrid";
 import DiagramModel from "./../DiagramModel";
 import DiagramLink from "./DiagramLink";
@@ -72,6 +71,12 @@ function snapToGrip(val, gridSize) {
 export default {
   name: "Diagram",
   Model: DiagramModel,
+
+  components: {
+    DiagramNodeWrapper,
+    DiagramLink,
+    DiagramGrid
+  },
 
   props: {
     model: {
@@ -103,12 +108,6 @@ export default {
       mouseX: 0,
       mouseY: 0
     };
-  },
-  components: {
-    DiagramNodeWrapper,
-    DiagramLink,
-    DiagramNode,
-    DiagramGrid
   },
 
   methods: {
@@ -351,6 +350,7 @@ export default {
       this.initialDragY = y;
     }
   },
+
   computed: {
     querySelector: function() {
       return document.querySelector("#viewport");

@@ -24,6 +24,7 @@ class DiagramNode {
     this.width = width;
     this.height = height;
     this.ports = [];
+    this.componentType = undefined;
   }
 
   /**

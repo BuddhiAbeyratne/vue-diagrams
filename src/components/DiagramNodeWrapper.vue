@@ -1,5 +1,6 @@
 <template>
-  <DiagramNode
+  <component
+    v-bind:is="nodeComponentType"
     :ref="'node-' + nodeIndex"
     :title="node.title"
     :x="node.x"
@@ -18,6 +19,7 @@
   >
     <DiagramPort
       v-for="(port, portIndex) in node.ports"
+      :key="port.id"
       :ref="'port-' + port.id"
       :id="port.id"
       :nodeIndex="nodeIndex"
@@ -28,8 +30,9 @@
       @onStartDragNewLink="startDragNewLink"
       @mouseUpPort="mouseUpPort"
     ></DiagramPort>
-  </DiagramNode>
+  </component>
 </template>
+
 <script>
 import SvgPanZoom from "vue-svg-pan-zoom";
 import DiagramModel from "./../DiagramModel";
@@ -58,10 +61,10 @@ export default {
     }
   },
 
-  data() {
-    return {
-      nodeComponentType: DiagramNode
-    };
+  computed: {
+    nodeComponentType() {
+      return this.getNodeComponentType(this.node.componentType);
+    }
   },
 
   methods: {
@@ -86,8 +89,8 @@ export default {
       this.$emit("selectNode", item);
     },
 
-    getNodeComponentType(nodeType) {
-      return DiagramNode;
+    getNodeComponentType(componentType) {
+      return componentType ? componentType : "DiagramNode";
     }
   }
 };

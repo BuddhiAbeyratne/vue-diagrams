@@ -60,8 +60,12 @@
 </template>
 
 <script>
+import AbstractNode from "./AbstractNode.vue";
+
 export default {
   name: "DiagramNode",
+
+  extends: AbstractNode,
 
   props: {
     title: {
