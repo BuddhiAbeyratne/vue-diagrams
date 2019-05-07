@@ -33,65 +33,83 @@
   </component>
 </template>
 
-<script>
-import SvgPanZoom from "vue-svg-pan-zoom";
-import DiagramModel from "./../DiagramModel";
-import DiagramNode from "./DiagramNode";
-import DiagramLink from "./DiagramLink";
-import DiagramPort from "./DiagramPort";
-import LinkFactory from "../util/LinkFactory";
+<script lang="ts">
+import Vue from 'vue';
+import Component from 'vue-class-component';
+import DiagramLink from './DiagramLink.vue';
+import DiagramNode from './DiagramNode.vue';
+import DiagramPort from './DiagramPort.vue';
+/*
+const props = Vue.extend({
+  props: {
+    node: {
+      type: Object as () => string,
+      default: () => ({})
+    },
+    nodeIndex: {
+      type: Object as () => string,
+      default: () => ({})
+    },
+    isSelected: {
+      type: Object as () => string,
+      default: () => ({})
+    }
+  }
+});*/
 
-export default {
-  name: "DiagramNodeWrapper",
+@Component({
   components: {
     DiagramNode,
     DiagramLink,
     DiagramPort
   },
-
   props: {
     node: {
-      required: true
+      type: Object as () => any,
+      default: () => ({})
     },
     nodeIndex: {
-      required: true
+      type: Number,
+      default: () => ({})
     },
     isSelected: {
-      default: false
-    }
-  },
-
-  computed: {
-    nodeComponentType() {
-      return this.getNodeComponentType(this.node.componentType);
-    }
-  },
-
-  methods: {
-    handleClick(nodeId) {
-      this.$emit("click", nodeId);
-    },
-
-    handleDelete(nodeId) {
-      this.$emit("delete", nodeId);
-    },
-
-    startDragNewLink(startPortId) {
-      this.$emit("startDragNewLink", startPortId);
-    },
-
-    mouseUpPort(portId) {
-      this.$emit("mouseUpPort", portId);
-    },
-
-    startDragItem(item, x, y) {
-      this.$emit("startDragNode", { item, x, y });
-      this.$emit("selectNode", item);
-    },
-
-    getNodeComponentType(componentType) {
-      return componentType ? componentType : "DiagramNode";
+      type: Boolean,
+      default: () => ({})
     }
   }
-};
+})
+export default class DiagramNodeWrapper extends Vue {
+  node: any;
+  nodeIndex: number;
+  isSelected: boolean;
+
+  get nodeComponentType() {
+    return this.getNodeComponentType(this.node.componentType);
+  }
+
+  handleClick(nodeId: number) {
+    this.$emit('click', nodeId);
+  }
+
+  handleDelete(nodeId: number) {
+    this.$emit('delete', nodeId);
+  }
+
+  startDragNewLink(startPortId: number) {
+    this.$emit('startDragNewLink', startPortId);
+  }
+
+  mouseUpPort(portId: number) {
+    this.$emit('mouseUpPort', portId);
+  }
+
+  startDragItem(item: any, x: number, y: number) {
+    this.$emit('startDragNode', { item, x, y });
+    this.$emit('selectNode', item);
+  }
+
+  getNodeComponentType(componentType: any) {
+    return componentType ? componentType : 'DiagramNode';
+  }
+}
 </script>

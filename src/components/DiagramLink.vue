@@ -65,19 +65,21 @@
     </g>
     <DiagramPoint
       v-for="(point, pointIndex) in points"
+      :key="pointIndex"
       @mouseenter="mouseEnterPoint(point)"
       @mouseleave="mouseLeavePoint(point)"
-      @mousedown="mouseDownPoint($event, pointIndex)"
+      @mousedown="mouseDownPoint(pointIndex)"
       :x="point.x" :y="point.y"
       />
   </g>
 </template>
-<script>
-import DiagramPoint from "./DiagramPoint";
+
+<script lang="ts">
+import DiagramPoint from './DiagramPoint.vue';
 
 export default {
-  name: "DiagramLink",
-  props: ["positionFrom", "positionTo", "id", "index", "points"],
+  name: 'DiagramLink',
+  props: ['positionFrom', 'positionTo', 'id', 'index', 'points'],
 
   components: {
     DiagramPoint
@@ -85,31 +87,31 @@ export default {
 
   data() {
     return {
-      largeStrokeStyle: "stroke:rgba(255,0,0,0.0);",
-      pointStyleNormal: "stroke:rgba(255,0,0,0.0); stroke-width: 6",
-      pointStyleHover: "stroke:rgba(255,0,0,0.5); stroke-width: 6"
+      largeStrokeStyle: 'stroke:rgba(255,0,0,0.0);',
+      pointStyleNormal: 'stroke:rgba(255,0,0,0.0); stroke-width: 6',
+      pointStyleHover: 'stroke:rgba(255,0,0,0.5); stroke-width: 6'
     };
   },
   methods: {
     mouseEnter() {
-      this.largeStrokeStyle = "stroke:rgba(255,0,0,0.5);";
+      this.largeStrokeStyle = 'stroke:rgba(255,0,0,0.5);';
     },
     mouseLeave() {
-      this.largeStrokeStyle = "stroke:rgba(255,0,0,0.0);";
+      this.largeStrokeStyle = 'stroke:rgba(255,0,0,0.0);';
     },
-    mouseDownPoint(pos, pointIndex) {
-      this.$emit("onStartDrag", {
-        type: "points",
-        linkIndex: this.index,
-        pointIndex
+    mouseDownPoint(pointIndex: number) {
+      this.$emit('onStartDrag', {
+        pointIndex,
+        type: 'points',
+        linkIndex: this.index
       });
     },
-    mouseDown(pos) {},
-    mouseDownSegment(pos, segmentIndex) {
-      this.$emit("onDeleteLink", this.id);
+    mouseDown() {},
+    mouseDownSegment() {
+      this.$emit('onDeleteLink', this.id);
     },
-    createPoint(x, y, pointIndex) {
-      this.$emit("onCreatePoint", x, y, this.index, pointIndex);
+    createPoint(x: number, y: number, pointIndex: number) {
+      this.$emit('onCreatePoint', x, y, this.index, pointIndex);
     }
   },
   computed: {
@@ -130,13 +132,13 @@ export default {
     },
 
     curve() {
-      var x1 = Math.trunc(this.positionFrom.x),
-        y1 = Math.trunc(this.positionFrom.y - 4),
-        x2 = Math.trunc(this.positionTo.x - 4),
-        y2 = Math.trunc(this.positionTo.y - 4);
+      const x1 = Math.trunc(this.positionFrom.x);
+      const y1 = Math.trunc(this.positionFrom.y - 4);
+      const x2 = Math.trunc(this.positionTo.x - 4);
+      const y2 = Math.trunc(this.positionTo.y - 4);
 
-      var distance = Math.trunc(4 * Math.sqrt(Math.abs(x1 - x2)));
-      var path = `M${x1},${y1} C${x1 + distance},${y1} ${x2 -
+      const distance = Math.trunc(4 * Math.sqrt(Math.abs(x1 - x2)));
+      const path = `M${x1},${y1} C${x1 + distance},${y1} ${x2 -
         distance},${y2} ${x2},${y2}`;
       return path;
     }

@@ -1,0 +1,19 @@
+{
+  "extends": "tslint-config-airbnb",
+  "rules": {
+    "comma-dangle": ["error", "never"],
+    "max-line-length": [true, 120],
+    "trailing-comma": false,
+    "import-name": false,
+    "align": [true, "parameters", "statements"],
+    "radix": false,
+    "ordered-imports": true
+  },
+  "defaultSeverity": "warning",
+  "linterOptions": {
+    "exclude": [
+      "node_modules/**",
+      "src/plugins/**"
+    ]
+  }
+}

@@ -1,5 +1,5 @@
-import Vue from "vue";
-import Diagram from "../Diagram";
+import Vue from 'vue';
+import Diagram from '../Diagram';
 
 describe("Diagram.vue", () => {
   const Constructor = Vue.extend(Diagram);

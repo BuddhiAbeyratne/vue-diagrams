@@ -1,4 +1,4 @@
-import ModuleLibrary from "../index";
+import ModuleLibrary from '../main';
 
 test("Should register all components when installed", () => {
   const component = jest.fn();

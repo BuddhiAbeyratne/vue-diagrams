@@ -8,10 +8,12 @@
     :cx="x" :cy="y" r="5"
     fill="black" />
 </template>
-<script>
+
+<script lang="ts">
+
 export default {
-  name: "DiagramPoint",
-  props: ["x", "y"],
+  name: 'DiagramPoint',
+  props: ['x', 'y'],
   data() {
     return {
       hover: false

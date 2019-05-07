@@ -1,5 +1,5 @@
 import { storiesOf } from "@storybook/vue";
-import Diagram from "../src/components/Diagram";
+import Diagram from '../src/components/Diagram';
 
 // Add more stories here to live develop your components
 storiesOf("Diagram", module).add("Diagram dimensions", () => ({

@@ -1,6 +1,6 @@
 <template>
   <div>
-    Version 1.4
+    Version 1.8
     <DiagramGrid
       :beforePan="beforePan"
       :panEnabled="panEnabled"
@@ -11,7 +11,7 @@
       @mousedown="clearSelection"
     >
       <DiagramLink
-        v-for="(link, index) in model._model.links"
+        v-for="(link, index) in value._model.links"
         :ref="'link-' + index"
         :positionFrom="link.positionFrom"
         :positionTo="link.positionTo"
@@ -31,7 +31,7 @@
         :y2="convertXYtoViewPort(0, mouseY).y"
       />
       <DiagramNodeWrapper
-        v-for="(node, nodeIndex) in model._model.nodes"
+        v-for="(node, nodeIndex) in value._model.nodes"
         :key="nodeIndex"
         :node="node"
         :nodeIndex="nodeIndex"
@@ -46,323 +46,360 @@
     </DiagramGrid>
   </div>
 </template>
-<script>
-import SvgPanZoom from "vue-svg-pan-zoom";
-import DiagramNodeWrapper from "./DiagramNodeWrapper";
-import DiagramGrid from "./DiagramGrid";
-import DiagramModel from "./../DiagramModel";
-import DiagramLink from "./DiagramLink";
-import LinkFactory from "../util/LinkFactory";
 
-function getAbsoluteXY(element) {
-  var viewportElement = document.documentElement;
-  var box = element.getBoundingClientRect();
-  var scrollLeft = viewportElement.scrollLeft;
-  var scrollTop = viewportElement.scrollTop;
-  var x = box.left + scrollLeft;
-  var y = box.top + scrollTop;
-  return { x: x, y: y };
+<script lang="ts">
+import Vue from 'vue';
+import Component from 'vue-class-component';
+import DiagramModel from '../DiagramModel';
+import LinkFactory from '../util/LinkFactory';
+import DiagramGrid from './DiagramGrid.vue';
+import DiagramLink from './DiagramLink.vue';
+import DiagramNodeWrapper from './DiagramNodeWrapper.vue';
+
+function getAbsoluteXY(element: any) {
+  const viewportElement = document.documentElement;
+  const box = element.getBoundingClientRect();
+  const scrollLeft = viewportElement.scrollLeft;
+  const scrollTop = viewportElement.scrollTop;
+  const x = box.left + scrollLeft;
+  const y = box.top + scrollTop;
+  return { x, y };
 }
 
-function snapToGrip(val, gridSize) {
+function snapToGrip(val: number, gridSize: number) {
   return gridSize * Math.round(val / gridSize);
 }
 
-export default {
-  name: "Diagram",
-  Model: DiagramModel,
+/*const props = Vue.extend({
+  props: {
+    diagramModel: {
+      type: Object as () => DiagramModel,
+      default: () => ({})
+    },
+    value: {
+      type: Object as () => DiagramModel,
+      default: () => ({})
+    },
+    test: {
+      type: String,
+      default: "TEST123"
+    },
+    width: {
+      type: Number,
+      default: 500
+    },
+    height: {
+      type: Number,
+      default: 500
+    },
+    gridSnap: {
+      type: Number,
+      default: 1
+    }
+  }
+  
+});
 
+console.log("PROPS: " + props);*/
+
+@Component({
   components: {
     DiagramNodeWrapper,
     DiagramLink,
     DiagramGrid
   },
-
   props: {
-    model: {
-      required: true
+    diagramModel: {
+      type: Object as () => DiagramModel,
+      default: () => ({})
+    },
+    value: {
+      type: Object as () => DiagramModel,
+      default: () => ({})
     },
     width: {
+      type: Number,
       default: 500
     },
     height: {
+      type: Number,
       default: 500
     },
     gridSnap: {
+      type: Number,
       default: 1
     }
-  },
+  }
+})
+export default class Diagram extends Vue {
+  value: DiagramModel;
+  width!: number;
+  height!: number;
 
-  data() {
+  document: any;
+  panEnabled = true;
+  draggedItem = undefined;
+  selectedItem: any = {};
+  initialDragX = 0;
+  initialDragY = 0;
+  newLink = null;
+  mouseX = 0;
+  mouseY = 0;
+
+  gridSnap!: number;
+
+  created() {
+    console.log("AT CREATION: " + JSON.stringify(this.value) + ", " + this.width);
     this.updateLinksPositions();
+  }
 
-    return {
-      document,
-      zoomEnabled: true,
-      panEnabled: true,
-      draggedItem: undefined,
-      selectedItem: {},
-      initialDragX: 0,
-      initialDragY: 0,
-      newLink: undefined,
-      mouseX: 0,
-      mouseY: 0
-    };
-  },
+  mounted() {
+    console.log("AT MOUNTED: " + JSON.stringify(this.value) + ", " + this.width);
+  }
 
-  methods: {
-    convertXYtoViewPort(x, y) {
-      let rootelt = document.getElementById("svgroot2");
-      let rec = document.getElementById("viewport");
-      let point = rootelt.createSVGPoint();
-      let rooteltPosition = getAbsoluteXY(rootelt);
-      point.x = x - rooteltPosition.x;
-      point.y = y - rooteltPosition.y;
-      let ctm = rec.getCTM().inverse();
-      return point.matrixTransform(ctm);
-    },
+  get model() {
+    return this.value != undefined ? this.value : new DiagramModel();
+  }
 
-    beforePan() {
-      if (this.selectedItem.type || this.draggedItem || this.newLink)
-        return false;
-      else return true;
-    },
+  convertXYtoViewPort(x: number, y: number) {
+    const rootelt: any = document.getElementById('svgroot2');
+    const rec: any = document.getElementById('viewport');
+    const point = rootelt.createSVGPoint();
+    const rooteltPosition = getAbsoluteXY(rootelt);
+    point.x = x - rooteltPosition.x;
+    point.y = y - rooteltPosition.y;
+    const ctm = rec.getCTM().inverse();
+    return point.matrixTransform(ctm);
+  }
 
-    createPoint(x, y, linkIndex, pointIndex) {
-      let coords = this.convertXYtoViewPort(x, y);
-      let links = this.model._model.links;
+  beforePan() {
+    if (this.selectedItem.type || this.draggedItem || this.newLink) {
+      return false;
+    }
+    return true;
+  }
 
-      //FIXME works well only on links created at startup
-      if (links[linkIndex].points === undefined) links[linkIndex].points = [];
+  createPoint(x: number, y: number, linkIndex: number, pointIndex: number) {
+    const coords = this.convertXYtoViewPort(x, y);
+    const links = this.value._model.links;
 
-      var points = links[linkIndex].points;
-      points.splice(pointIndex, 0, coords);
-      links[linkIndex].points = points;
-    },
+    // @todo works well only on links created at startup
+    if (links[linkIndex].points === undefined) links[linkIndex].points = [];
 
-    deleteLink(linkId) {
-      const link = this.model.getLink(linkId);
+    const points = links[linkIndex].points;
+    points.splice(pointIndex, 0, coords);
+    links[linkIndex].points = points;
+  }
 
-      this.model.deleteLink(link);
-      this.$emit("linkDeleted", linkId); // @todo need to standardize event naming
-    },
+  deleteLink(linkId: number) {
+    const link = this.value.getLink(linkId);
 
-    clearSelection() {
-      this.selectedItem = {};
-    },
+    this.value.deleteLink(link);
+    this.$emit('linkDeleted', linkId); // @todo need to standardize event naming
+  }
 
-    updateLinksPositions() {
-      var links = [];
+  clearSelection() {
+    this.selectedItem = {};
+  }
 
-      if (this.model && this.model._model) links = this.model._model.links;
+  updateLinksPositions() {
+    let links = [];
 
-      this.$nextTick(() => {
-        setTimeout(() => {
-          for (var i = 0; i < links.length; i++) {
-            var coords;
-            coords = this.getPortHandlePosition(links[i].from);
-            links[i].positionFrom = { x: coords.x, y: coords.y };
-            coords = this.getPortHandlePosition(links[i].to);
-            links[i].positionTo = { x: coords.x, y: coords.y };
-          }
-        }, 100);
-      });
-    },
+    if (this.value && this.value._model) links = this.value._model.links;
 
-    getPortHandlePosition(portId) {
-      if (this.getPortById(portId)) {
-        var port = this.getPortById(portId);
-        var node = this.getNodeByPortId(portId);
-        var x;
-        var y;
-        if (port.type === "in") {
-          x = node.x + 10;
-          y = node.y + port.y + 64;
-        } else {
-          x = node.x + node.width + 10;
-          y = node.y + port.y + 64;
+    this.$nextTick(() => {
+      setTimeout(() => {
+        for (let i = 0; i < links.length; i += 1) {
+          let coords: any;
+          coords = this.getPortHandlePosition(links[i].from);
+          links[i].positionFrom = { x: coords.x, y: coords.y };
+          coords = this.getPortHandlePosition(links[i].to);
+          links[i].positionTo = { x: coords.x, y: coords.y };
         }
+      }, 100);
+    });
+  }
 
-        return { x, y };
+  getPortHandlePosition(portId: number) {
+    if (this.getPortById(portId)) {
+      const port = this.getPortById(portId);
+      const node = this.getNodeByPortId(portId);
+      let x;
+      let y;
+      if (port.type === 'in') {
+        x = node.x + 10;
+        y = node.y + port.y + 64;
       } else {
-        console.warn(
-          `port "${portId}" not found. you must call this method after the first render`
-        );
-        return 0;
+        x = node.x + node.width + 10;
+        y = node.y + port.y + 64;
       }
-    },
 
-    mouseMove(pos) {
-      var links = this.model._model.links;
-      this.mouseX = pos.x;
-      this.mouseY = pos.y;
-      if (this.draggedItem) {
-        var index = this.draggedItem.index;
-        var type = this.draggedItem.type;
-        if (type === "points") {
-          let coords = this.convertXYtoViewPort(this.mouseX, this.mouseY);
+      return { x, y };
+    }
 
-          coords.x = snapToGrip(coords.x, this.gridSnap) - this.gridSnap / 2;
-          coords.y = snapToGrip(coords.y, this.gridSnap);
+    console.warn(
+      `port "${portId}" not found. you must call this method after the first render`
+    );
+    return 0;
+  }
 
-          links[this.draggedItem.linkIndex].points[
-            this.draggedItem.pointIndex
-          ].x =
-            coords.x;
-          links[this.draggedItem.linkIndex].points[
-            this.draggedItem.pointIndex
-          ].y =
-            coords.y;
-          this.updateLinksPositions();
-        } else {
-          let coords = this.convertXYtoViewPort(this.mouseX, this.mouseY);
+  mouseMove(pos: any) {
+    const links = this.value._model.links;
+    this.mouseX = pos.x;
+    this.mouseY = pos.y;
+    if (this.draggedItem) {
+      const index = this.draggedItem.index;
+      const type = this.draggedItem.type;
+      if (type === 'points') {
+        const coords = this.convertXYtoViewPort(this.mouseX, this.mouseY);
 
-          coords.x = snapToGrip(coords.x, this.gridSnap) - this.gridSnap / 2;
-          coords.y = snapToGrip(coords.y, this.gridSnap);
+        coords.x = snapToGrip(coords.x, this.gridSnap) - this.gridSnap / 2;
+        coords.y = snapToGrip(coords.y, this.gridSnap);
 
-          this.model._model[type][index].x = coords.x - 30;
-          this.model._model[type][index].y = coords.y - 30;
-          this.updateLinksPositions();
-        }
-      }
-    },
+        links[this.draggedItem.linkIndex].points[this.draggedItem.pointIndex].x = coords.x;
+        links[this.draggedItem.linkIndex].points[this.draggedItem.pointIndex].y = coords.y;
+        this.updateLinksPositions();
+      } else {
+        const coords = this.convertXYtoViewPort(this.mouseX, this.mouseY);
 
-    mouseUp() {
-      this.draggedItem = undefined;
-      this.newLink = undefined;
-    },
+        coords.x = snapToGrip(coords.x, this.gridSnap) - this.gridSnap / 2;
+        coords.y = snapToGrip(coords.y, this.gridSnap);
 
-    startDragPoint(pointInfo) {
-      this.draggedItem = pointInfo;
-    },
-
-    onMouseUpPort(portId) {
-      let links = this.model._model.links;
-
-      if (this.draggedItem && this.draggedItem.type === "points") {
-        let pointIndex = this.draggedItem.pointIndex;
-        let linkIndex = this.draggedItem.linkIndex;
-
-        if (this.getPortById(portId).type === "in") {
-          let l = links[linkIndex].points.length;
-          links[linkIndex].points.splice(
-            pointIndex,
-            l - this.draggedItem.pointIndex
-          );
-        } else {
-          links[linkIndex].points.splice(0, pointIndex + 1);
-        }
+        this.value._model[type][index].x = coords.x - 30;
+        this.value._model[type][index].y = coords.y - 30;
         this.updateLinksPositions();
       }
-
-      if (this.newLink !== undefined) {
-        this.createLink(portId);
-      }
-    },
-
-    getPortById(portId) {
-      const node = this.model._model.nodes.find(
-        node => node.ports.find(port => port.id === portId) !== undefined
-      );
-      return node != undefined
-        ? node.ports.find(port => port.id === portId)
-        : undefined;
-    },
-
-    getNodeIndexById(portId) {
-      return this.model._model.nodes.findIndex(
-        node => node.ports.find(port => port.id === portId) !== undefined
-      );
-    },
-
-    getNodeByPortId(portId) {
-      return this.model._model.nodes.find(
-        node => node.ports.find(port => port.id === portId) !== undefined
-      );
-    },
-
-    createLink(portId) {
-      let links = this.model._model.links;
-
-      let port1Id = this.newLink.startPortId;
-      let port2Id = portId;
-      let port1 = this.getPortById(port1Id);
-      let port2 = this.getPortById(port2Id);
-
-      let createdLink = null;
-      if (port1.type === "in" && port2.type === "out") {
-        createdLink = LinkFactory.createLink(port2.id, port1.id);
-      } else if (port2.type === "in" && port1.type === "out") {
-        createdLink = LinkFactory.createLink(port1.id, port2.id);
-      } else {
-        console.warn("You must link one out port and one in port");
-      }
-
-      if (createdLink !== null) {
-        links.push(createdLink);
-        this.model._model.links = links;
-        this.updateLinksPositions();
-        this.$emit(
-          "linkCreated",
-          createdLink.id,
-          this.getNodeByPortId(port1Id).id,
-          this.getNodeByPortId(port2Id).id,
-          port1Id
-        );
-      }
-    },
-
-    onSelectNode(node) {
-      this.selectedItem = node;
-    },
-
-    onStartDragNode({ item, x, y }) {
-      this.panEnabled = false;
-      this.initialDragX = x;
-      this.initialDragY = y;
-      this.draggedItem = item;
-    },
-
-    startDragNewLink(startPortId) {
-      this.panEnabled = false;
-      this.newLink = {
-        startPortId
-      };
-    },
-
-    handleClick(nodeId) {
-      this.$emit("click", nodeId);
-    },
-
-    handleDelete(nodeId) {
-      this.$emit("delete", nodeId);
-    },
-
-    startDragPoint(pointInfo) {
-      this.draggedItem = pointInfo;
-    },
-
-    startDragItem(item, x, y) {
-      this.panEnabled = false;
-      this.draggedItem = item;
-      this.selectedItem = item;
-      this.initialDragX = x;
-      this.initialDragY = y;
-    }
-  },
-
-  computed: {
-    querySelector: function() {
-      return document.querySelector("#viewport");
-    }
-  },
-
-  watch: {
-    "model._model.links": function() {
-      this.updateLinksPositions();
     }
   }
-};
+
+  mouseUp() {
+    this.draggedItem = undefined;
+    this.newLink = undefined;
+  }
+
+  startDragPoint(pointInfo: any) {
+    this.draggedItem = pointInfo;
+  }
+
+  onMouseUpPort(portId: number) {
+    const links = this.value._model.links;
+
+    if (this.draggedItem && this.draggedItem.type === 'points') {
+      const pointIndex = this.draggedItem.pointIndex;
+      const linkIndex = this.draggedItem.linkIndex;
+
+      if (this.getPortById(portId).type === 'in') {
+        const l = links[linkIndex].points.length;
+        links[linkIndex].points.splice(
+          pointIndex,
+          l - this.draggedItem.pointIndex
+        );
+      } else {
+        links[linkIndex].points.splice(0, pointIndex + 1);
+      }
+      this.updateLinksPositions();
+    }
+
+    if (this.newLink !== undefined) {
+      this.createLink(portId);
+    }
+  }
+
+  getPortById(portId: number) {
+    const node = this.value._model.nodes.find(
+      node => node.ports.find(port => port.id === portId) !== undefined
+    );
+    return node != undefined
+      ? node.ports.find(port => port.id === portId)
+      : undefined;
+  }
+
+  getNodeIndexById(portId: number) {
+    return this.value._model.nodes.findIndex(
+      node => node.ports.find(port => port.id === portId) !== undefined
+    );
+  }
+
+  getNodeByPortId(portId: number) {
+    return this.value._model.nodes.find(
+      node => node.ports.find(port => port.id === portId) !== undefined
+    );
+  }
+
+  createLink(portId: number) {
+    const links = this.value._model.links;
+
+    const port1Id = this.newLink.startPortId;
+    const port2Id = portId;
+    const port1 = this.getPortById(port1Id);
+    const port2 = this.getPortById(port2Id);
+
+    let createdLink = null;
+    if (port1.type === 'in' && port2.type === 'out') {
+      createdLink = LinkFactory.createLink(port2.id, port1.id);
+    } else if (port2.type === 'in' && port1.type === 'out') {
+      createdLink = LinkFactory.createLink(port1.id, port2.id);
+    } else {
+      console.warn('You must link one out port and one in port');
+    }
+
+    if (createdLink !== null) {
+      links.push(createdLink);
+      this.value._model.links = links;
+      this.updateLinksPositions();
+      this.$emit(
+        'linkCreated',
+        createdLink.id,
+        this.getNodeByPortId(port1Id).id,
+        this.getNodeByPortId(port2Id).id,
+        port1Id
+      );
+    }
+  }
+
+  onSelectNode(node: any) {
+    this.selectedItem = node;
+  }
+
+  onStartDragNode({ item, x, y }: any) {
+    this.panEnabled = false;
+    this.initialDragX = x;
+    this.initialDragY = y;
+    this.draggedItem = item;
+  }
+
+  startDragNewLink(startPortId: number) {
+    this.panEnabled = false;
+    this.newLink = {
+      startPortId
+    };
+  }
+
+  handleClick(nodeId: number) {
+    this.$emit('click', nodeId);
+  }
+
+  handleDelete(nodeId: number) {
+    this.$emit('delete', nodeId);
+  }
+
+  startDragItem(item: any, x: number, y: number) {
+    this.panEnabled = false;
+    this.draggedItem = item;
+    this.selectedItem = item;
+    this.initialDragX = x;
+    this.initialDragY = y;
+  }
+
+  get querySelector() {
+    return document.querySelector('#viewport');
+  }
+
+  /*@Watch('model._model.links')
+  onModelLinksChange() {
+    this.updateLinksPositions();
+  }*/
+}
 </script>
 <style scoped>
 

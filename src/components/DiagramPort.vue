@@ -24,30 +24,91 @@
     </svg>
   </g>
 </template>
-<script>
-export default {
-  name: "DiagramPort",
-  props: ["id", "y", "type", "name", "nodeWidth", "nodeIndex"],
-  data() {
-    return {
-      fill: "#444444"
-    };
-  },
-  methods: {
-    mouseup() {
-      this.$emit("mouseUpPort", this.id);
+<script lang="ts">
+import Vue from 'vue';
+import Component from 'vue-class-component';
+/*
+const props = Vue.extend({
+  props: {
+    id: {
+      type: Object as () => number,
+      default: () => ({})
     },
-
-    enter() {
-      this.fill = "#888888";
+    y: {
+      type: Object as () => number,
+      default: () => ({})
     },
-
-    leave() {
-      this.fill = "#444444";
+    type: {
+      type: Object as () => number,
+      default: () => ({})
     },
-    startDragNewLink() {
-      this.$emit("onStartDragNewLink", this.id);
+    name: {
+      type: Object as () => string,
+      default: () => ({})
+    },
+    nodeWidth: {
+      type: Object as () => number,
+      default: () => ({})
+    },
+    nodeIndex: {
+      type: Object as () => number,
+      default: () => ({})
     }
   }
-};
+});
+*/
+
+@Component({
+  props: {
+    id: {
+      type: Number,
+      default: () => ({})
+    },
+    y: {
+      type: Number,
+      default: () => ({})
+    },
+    type: {
+      type: String,
+      default: () => ({})
+    },
+    name: {
+      type: String,
+      default: () => ({})
+    },
+    nodeWidth: {
+      type: Number,
+      default: () => ({})
+    },
+    nodeIndex: {
+      type: Number,
+      default: () => ({})
+    }
+  }
+})
+export default class DiagramPort extends Vue {
+  fill = '#444444';
+  id: number;
+  y: number;
+  type: string;
+  name: string;
+  nodeWidth: number;
+  nodeIndex: number;
+
+  mouseup() {
+    this.$emit('mouseUpPort', this.id);
+  }
+
+  enter() {
+    this.fill = '#888888';
+  }
+
+  leave() {
+    this.fill = '#444444';
+  }
+
+  startDragNewLink() {
+    this.$emit('onStartDragNewLink', this.id);
+  }
+}
 </script>

@@ -59,11 +59,11 @@
   </svg>
 </template>
 
-<script>
-import AbstractNode from "./AbstractNode.vue";
+<script lang="ts">
+import AbstractNode from './AbstractNode.vue';
 
 export default {
-  name: "DiagramNode",
+  name: 'DiagramNode',
 
   extends: AbstractNode,
 
@@ -92,7 +92,7 @@ export default {
     },
     color: {
       type: String,
-      default: "#66cc00"
+      default: '#66cc00'
     },
     deletable: {
       type: Boolean,
@@ -109,14 +109,14 @@ export default {
   },
 
   methods: {
-    deleteNode: function() {
-      this.$emit("delete", this.id);
+    deleteNode() {
+      this.$emit('delete', this.id);
     },
 
-    mouseDown: function(event) {
+    mouseDown(event: any) {
       this.$emit(
-        "onStartDrag",
-        { type: "nodes", index: this.index },
+        'onStartDrag',
+        { type: 'nodes', index: this.index },
         event.x - this.x,
         event.y - this.y
       );
@@ -131,7 +131,7 @@ export default {
     },
 
     handleClick() {
-      this.$emit("click", this.id);
+      this.$emit('click', this.id);
     }
   }
 };

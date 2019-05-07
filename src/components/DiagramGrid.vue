@@ -44,14 +44,21 @@
     </svg>
   </SvgPanZoom>
 </template>
-<script>
-import SvgPanZoom from "vue-svg-pan-zoom";
+
+<script lang="ts">
+import SvgPanZoom from 'vue-svg-pan-zoom';
 
 export default {
-  name: "DiagramGrid",
+  name: 'DiagramGrid',
 
   components: {
     SvgPanZoom
+  },
+
+  data() {
+    return {
+      zoomEnabled: true
+    };
   },
 
   props: {
@@ -70,16 +77,16 @@ export default {
   },
 
   methods: {
-    mouseMove(pos) {
-      this.$emit("mousemove", pos);
+    mouseMove(pos: any) {
+      this.$emit('mousemove', pos);
     },
 
     mouseUp() {
-      this.$emit("mouseup");
+      this.$emit('mouseup');
     },
 
     mouseDown() {
-      this.$emit("clearselection");
+      this.$emit('clearselection');
     }
   }
 };
